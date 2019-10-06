@@ -1,0 +1,16 @@
+{
+  "name": "vk-bot-picture",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "start": "node public/bundle.js",
+    "build": "rollup -c"
+  },
+  "dependencies": {
+    "vk-io": "^4.0.0-rc.20"
+  },
+  "devDependencies": {
+    "rollup": "^1.23.1"
+  }
+}
