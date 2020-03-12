@@ -7,23 +7,32 @@ const vk = new VK({
 vk.updates.hear('Начать', async (context) => {
   await context.send({
     message: `Чтобы бот перекинул вам картинки, отправьте сообщение с текстом "Перекинь" и прикрепленными картинками.`,
-    keyboard: Keyboard.keyboard([
-      Keyboard.textButton({
-        label: 'Начать',
-        payload: {
-          command: 'Начать'
-        }
-      }),
-    ])
+		// keyboard: Keyboard.builder()
+		// 	.textButton({
+		// 		label: 'Начать',
+		// 		payload: {
+		// 			command: 'Начать'
+		// 		}
+		// 	})
   })
 })
 
 vk.updates.hear("Перекинь", async (context) => {
-  function sendPhotos() {
+  context.setActivity()
+  const sendPhotos = async () => {
     if (context.hasAttachments("photo")) {
-      context.getAttachments("photo").forEach(element => {
-        //photoArray.push(`photo${element.ownerId}_${element.id}_${element.accessKey}`)
-        context.sendPhoto(element.largePhoto)
+      let photoArray = []
+      for (const element of context.getAttachments("photo")) {
+        await vk.upload.messagePhoto({
+          source: element.largePhoto,
+        })
+        .then(attachment => {
+          photoArray.push(attachment.toString())
+        })
+      }
+      await vk.api.messages.send({
+        peer_id: context.peerId,
+        attachment: photoArray.join(",")
       })
     } else {
       context.send("Я не вижу фотографий. Попробуй ещё раз.")
