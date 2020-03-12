@@ -1,7 +1,0 @@
-{
-  "version": 2,
-  "name": "vk-bot-picture",
-  "builds": [
-    { "src": "public/**/*.js", "use": "@now/node" }
-  ]
-}
