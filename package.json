@@ -5,8 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "node public/bundle.js",
-    "build": "rollup -c",
-    "heroku-postbuild": "rollup -c"
+    "build": "rollup -c"
   },
   "dependencies": {
     "vk-io": "^4.0.0-rc.30"

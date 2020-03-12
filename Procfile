@@ -1,1 +1,1 @@
-worker: node public/bundle.js
+worker: npm run start
