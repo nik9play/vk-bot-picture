@@ -8,7 +8,7 @@
     "build": "rollup -c"
   },
   "dependencies": {
-    "vk-io": "^4.0.0-rc.20"
+    "vk-io": "^4.0.0-rc.30"
   },
   "devDependencies": {
     "rollup": "^1.23.1"
