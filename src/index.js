@@ -17,7 +17,7 @@ vk.updates.hear('Начать', async (context) => {
   })
 })
 
-vk.updates.hear("Перекинь", async (context) => {
+vk.updates.hear(/п(е)?рек(и)?нь/i, async (context) => {
   context.setActivity()
   const sendPhotos = async () => {
     if (context.hasAttachments("photo")) {
