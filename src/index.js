@@ -7,19 +7,19 @@ const vk = new VK({
 vk.updates.hear('Начать', async (context) => {
   await context.send({
     message: `Чтобы бот перекинул вам картинки, отправьте сообщение с текстом "Перекинь" в любом виде и прикрепленными картинками. Отправьте "Начать" для дополнительной информации.`,
-		// keyboard: Keyboard.builder()
-		// 	.textButton({
-		// 		label: 'Начать',
-		// 		payload: {
-		// 			command: 'Начать'
-		// 		}
-		// 	})
+    keyboard: Keyboard.builder()
+    	.textButton({
+    		label: 'Начать',
+    		payload: {
+    			command: 'Начать'
+    		}
+    	})
   })
 })
 
 vk.updates.hear(/п(е)?р(е)?к(и)?нь/i, async (context) => {
-  context.setActivity()
   const sendPhotos = async () => {
+    await context.setActivity();
     if (context.hasAttachments("photo")) {
       let photoArray = []
       for (const element of context.getAttachments("photo")) {
@@ -30,6 +30,7 @@ vk.updates.hear(/п(е)?р(е)?к(и)?нь/i, async (context) => {
           photoArray.push(attachment.toString())
         })
       }
+
       await vk.api.messages.send({
         peer_id: context.peerId,
         attachment: photoArray.join(",")
@@ -38,7 +39,7 @@ vk.updates.hear(/п(е)?р(е)?к(и)?нь/i, async (context) => {
       context.send("Я не вижу фотографий. Попробуй ещё раз.")
     }
   }
-
+ 
   await Promise.all([
     context.send({
       message: 'Жди...'
