@@ -1,4 +1,5 @@
 import { VK, Keyboard } from 'vk-io'
+import _ from 'lodash'
 
 const vk = new VK({
   token: process.env.BOT_TOKEN
@@ -17,14 +18,30 @@ vk.updates.hear('Начать', async (context) => {
   })
 })
 
+const findLargest = (sizesArray) => {
+  const unwantedTypes = ["o", "p", "q", "r"]
+
+  unwantedTypes.forEach(e => {
+    _.remove(sizesArray, function(n) {
+      return n.type == e;
+    })
+  })
+
+  const newArray = _.sortBy(sizesArray, ["width"])
+  _.reverse(newArray)
+
+  return newArray[0]
+}
+
 vk.updates.hear(/п(е)?р(е)?к(и)?нь/i, async (context) => {
   const sendPhotos = async () => {
     await context.setActivity();
     if (context.hasAttachments("photo")) {
       let photoArray = []
       for (const element of context.getAttachments("photo")) {
+        
         await vk.upload.messagePhoto({
-          source: element.largePhoto,
+          source: findLargest(element.sizes).url,
         })
         .then(attachment => {
           photoArray.push(attachment.toString())
@@ -47,14 +64,5 @@ vk.updates.hear(/п(е)?р(е)?к(и)?нь/i, async (context) => {
     sendPhotos()
   ])
 })
-
-/*vk.updates.hear("Перекинь", async (context) => {
-  await Promise.all([
-    context.send({
-      message: 'Жди...',
-      attachment: `photo${context.getAttachments()[0].ownerId}_${context.getAttachments()[0].id}`
-    })
-  ])
-})*/
 
 vk.updates.start().catch(console.error)

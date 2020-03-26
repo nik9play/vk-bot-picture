@@ -8,6 +8,7 @@
     "build": "webpack --mode production"
   },
   "dependencies": {
+    "lodash": "^4.17.15",
     "vk-io": "^4.0.0-rc.30"
   },
   "devDependencies": {
