@@ -1,24 +1,28 @@
-import { VK, Keyboard } from 'vk-io'
+import { VK, Keyboard, getRandomId } from 'vk-io'
+
 import _ from 'lodash'
 
 const vk = new VK({
   token: process.env.BOT_TOKEN
 })
 
-vk.updates.hear('Начать', async (context) => {
-  await context.send({
-    message: `Чтобы бот перекинул вам картинки, отправьте сообщение с текстом "Перекинь" в любом виде и прикрепленными картинками. Отправьте "Начать" для дополнительной информации.`,
-    keyboard: Keyboard.builder()
-    	.textButton({
-    		label: 'Начать',
-    		payload: {
-    			command: 'Начать'
-    		}
-    	})
-  })
+vk.updates.on('message_new', (context) => {
+  if (context.text == 'Начать')
+    return context.send({
+      message: `Просто отправь картинки сюда, и бот их перекинет.`,
+      keyboard: Keyboard.builder()
+        .textButton({
+          label: 'Начать',
+          payload: {
+            command: 'Начать'
+          }
+        })
+    })
+
+    processPhotos(context)
 })
 
-const findLargest = (sizesArray) => {
+function findLargest(sizesArray) {
   const unwantedTypes = ["o", "p", "q", "r"]
 
   unwantedTypes.forEach(e => {
@@ -33,36 +37,44 @@ const findLargest = (sizesArray) => {
   return newArray[0]
 }
 
-vk.updates.hear(/п(е)?р(е)?к(и)?нь/i, async (context) => {
-  const sendPhotos = async () => {
-    await context.setActivity();
+async function processPhotos(context) {
+  async function sendPhotos() {
+    const msgAttachments = (await vk.api.messages.getById({
+      message_ids: context.id
+    })).items[0].attachments
     if (context.hasAttachments("photo")) {
       let photoArray = []
-      for (const element of context.getAttachments("photo")) {
-        
-        await vk.upload.messagePhoto({
-          source: findLargest(element.sizes).url,
-        })
-        .then(attachment => {
-          photoArray.push(attachment.toString())
-        })
-      }
+      let promises = []
+      msgAttachments.forEach((e) => {
+        if (e.type == "photo") {
+          promises.push(vk.upload.messagePhoto({
+            peer_id: undefined,
+            source: {
+              value: findLargest(e.photo.sizes).url
+            },
+          })
+          .then(attachment => {
+            photoArray.push(attachment.toString())
+          }))
+        }
+      })
 
+      await Promise.all(promises)
       await vk.api.messages.send({
         peer_id: context.peerId,
-        attachment: photoArray.join(",")
+        attachment: photoArray.join(","),
+        random_id: getRandomId()
       })
     } else {
-      context.send("Я не вижу фотографий. Попробуй ещё раз.")
+      context.send("❌ Я не вижу фотографий. Попробуй ещё раз.")
     }
   }
  
   await Promise.all([
-    context.send({
-      message: 'Жди...'
-    }),
+    context.send('⌛ Жди...'),
+    context.setActivity(),
     sendPhotos()
   ])
-})
+}
 
 vk.updates.start().catch(console.error)
