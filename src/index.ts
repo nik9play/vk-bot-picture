@@ -1,4 +1,4 @@
-import { VK, Keyboard, MessageContext, ContextDefaultState, AttachmentType } from 'vk-io'
+import { VK, Keyboard, MessageContext, ContextDefaultState } from 'vk-io'
 import _ from 'lodash'
 
 const vk = new VK({
