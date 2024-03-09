@@ -6,6 +6,8 @@ const vk = new VK({
 })
 
 vk.updates.on('message_new', async (context) => {
+  return context.send({message: 'Бот временно не работает из-за ограничений ВК.'})
+
   if (context.text == 'Начать')
     return context.send({
       message: `👇 Просто отправь картинки сюда, и бот их перекинет.`,
