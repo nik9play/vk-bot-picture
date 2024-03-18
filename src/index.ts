@@ -17,7 +17,8 @@ const upload = new Upload({
 });
 
 vk.updates.on("message_new", async (context) => {
-  // return context.send({message: 'Бот временно не работает из-за ограничений ВК.'})
+  if (context.$groupId === 174060297) 
+    return context.send({ message: 'Используйте нового бота: https://vk.me/botsavepics2' })
 
   if (context.text == "Начать")
     return context.send({
