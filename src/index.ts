@@ -4,7 +4,6 @@ import {
   MessageContext,
   ContextDefaultState,
   Upload,
-  PhotoAttachment,
 } from "vk-io";
 import _ from "lodash";
 
@@ -17,12 +16,14 @@ const upload = new Upload({
 });
 
 vk.updates.on("message_new", async (context) => {
-  if (context.$groupId === 174060297) 
-    return context.send({ message: 'Используйте нового бота: https://vk.me/botsavepics2' })
+  if (context.$groupId === 174060297)
+    return context.send({
+      message: "Используйте нового бота: https://vk.me/botsavepics2",
+    });
 
   if (context.text == "Начать")
     return context.send({
-      message: `👇 Просто отправь картинки сюда, и бот их перекинет.`,
+      message: `👇 Просто отправь картинки сюда, и бот их перекинет. Бот может пересылать картинки из обычных сообщений, а так же пересланных сообщений первого уровня вложенности.`,
       keyboard: Keyboard.builder().textButton({
         label: "Начать",
         payload: {
@@ -32,7 +33,25 @@ vk.updates.on("message_new", async (context) => {
     });
 
   try {
-    await processPhotos(context);
+    let photosSent = false;
+
+    if (await processPhotos(context)) {
+      photosSent = true
+    }
+
+    if (context.forwards.length > 0) {
+      for (const forward of context.forwards) {
+        if (await processPhotos(forward)) {
+          photosSent = true
+        }
+      }
+    }
+
+    if (!photosSent) {
+      context.send(
+        "❌ Я не вижу изображений. Бот может пересылать картинки из обычных сообщений, а так же пересланных сообщений первого уровня вложенности."
+      );
+    }
   } catch (err) {
     console.error(err);
     context.send("❌ Произошла неизвестная ошибка.");
@@ -47,21 +66,22 @@ async function processPhotos(context: MessageContext<ContextDefaultState>) {
   ).items[0].attachments;
 
   if (attachments && context.hasAttachments("photo")) {
-    let photoArray = []
+    let photoArray = [];
 
     photoArray = attachments
-      .filter((attachment) => attachment.type === 'photo')
+      .filter((attachment) => attachment.type === "photo")
       .map((photo) => {
-        const accessKey = photo.photo.access_key !== undefined
-        ? `_${photo.photo.access_key}`
-        : '';
+        const accessKey =
+          photo.photo.access_key !== undefined
+            ? `_${photo.photo.access_key}`
+            : "";
 
         return `${photo.type}${photo.photo.owner_id}_${photo.photo.id}${accessKey}`;
-      })
+      });
 
     await context.send({
-      attachment: photoArray.join(',')
-    })
+      attachment: photoArray.join(","),
+    });
 
     // console.log(attachments[0].photo.sizes[0].url);
 
@@ -94,8 +114,11 @@ async function processPhotos(context: MessageContext<ContextDefaultState>) {
     // await context.send({
     //   attachment: attachmentsMsg,
     // });
+
+    // } else if () {
+    return true;
   } else {
-    await context.send("❌ Я не вижу фотографий. Попробуй ещё раз.");
+    return false;
   }
 }
 
