@@ -1,39 +1,51 @@
-import { VK, Keyboard, MessageContext, ContextDefaultState } from 'vk-io'
-import _ from 'lodash'
+import {
+  VK,
+  Keyboard,
+  MessageContext,
+  ContextDefaultState,
+  Upload,
+  PhotoAttachment,
+} from "vk-io";
+import _ from "lodash";
 
 const vk = new VK({
-  token: process.env.BOT_TOKEN || ''
-})
+  token: process.env.BOT_TOKEN || "",
+});
 
-vk.updates.on('message_new', async (context) => {
-  return context.send({message: 'Бот временно не работает из-за ограничений ВК.'})
+const upload = new Upload({
+  api: vk.api,
+});
 
-  if (context.text == 'Начать')
+vk.updates.on("message_new", async (context) => {
+  // return context.send({message: 'Бот временно не работает из-за ограничений ВК.'})
+
+  if (context.text == "Начать")
     return context.send({
       message: `👇 Просто отправь картинки сюда, и бот их перекинет.`,
-      keyboard: Keyboard.builder()
-        .textButton({
-          label: 'Начать',
-          payload: {
-            command: 'Начать'
-          }
-        })
+      keyboard: Keyboard.builder().textButton({
+        label: "Начать",
+        payload: {
+          command: "Начать",
+        },
+      }),
+    });
+
+  try {
+    await processPhotos(context);
+  } catch (err) {
+    console.error(err);
+    context.send("❌ Произошла неизвестная ошибка.");
+  }
+});
+
+async function processPhotos(context: MessageContext<ContextDefaultState>) {
+  const attachments = (
+    await vk.api.messages.getById({
+      message_ids: context.id,
     })
+  ).items[0].attachments;
 
-    try {
-      await processPhotos(context)
-    } catch (err) {
-      console.error(err)
-      context.send('❌ Произошла неизвестная ошибка.')
-    }
-})
-
-async function processPhotos(context: MessageContext<ContextDefaultState>) { 
-  const attachments = (await vk.api.messages.getById({
-    message_ids: context.id
-  })).items[0].attachments
-
-  if (attachments && context.hasAttachments('photo')) {
+  if (attachments && context.hasAttachments("photo")) {
     let photoArray = []
 
     photoArray = attachments
@@ -42,16 +54,51 @@ async function processPhotos(context: MessageContext<ContextDefaultState>) {
         const accessKey = photo.photo.access_key !== undefined
         ? `_${photo.photo.access_key}`
         : '';
-  
+
         return `${photo.type}${photo.photo.owner_id}_${photo.photo.id}${accessKey}`;
       })
 
     await context.send({
       attachment: photoArray.join(',')
     })
+
+    // console.log(attachments[0].photo.sizes[0].url);
+
+    // await context.send({
+    //   message: '⌛ Жди...',
+    // });
+
+    // const uploadValues = attachments
+    //   .filter((attachment) => attachment.type === "photo")
+    //   .map((photo) => {
+    //     return {
+    //       value: photo.photo.sizes[0].url,
+    //     };
+    //   });
+
+    // const attachmentsMsg: PhotoAttachment[] = []
+
+    // const promises = []
+
+    // for (const value of uploadValues) {
+    //   promises.push(upload.messagePhoto({
+    //     source: {
+    //       values: value,
+    //     },
+    //   }).then(att => attachmentsMsg.push(att)))
+    // }
+
+    // await Promise.all(promises)
+
+    // await context.send({
+    //   attachment: attachmentsMsg,
+    // });
   } else {
-    await context.send("❌ Я не вижу фотографий. Попробуй ещё раз.")
+    await context.send("❌ Я не вижу фотографий. Попробуй ещё раз.");
   }
 }
 
-vk.updates.start().then(() => console.log('Bot started')).catch(console.error)
+vk.updates
+  .start()
+  .then(() => console.log("Bot started"))
+  .catch(console.error);
