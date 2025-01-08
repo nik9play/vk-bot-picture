@@ -16,9 +16,9 @@ const upload = new Upload({
 });
 
 vk.updates.on("message_new", async (context) => {
-  if (context.$groupId === 225107278)
+  if (context.$groupId === 227318832)
     return context.send({
-      message: "Используйте нового бота: https://vk.me/botsavepics3",
+      message: "Используйте нового бота: https://vk.me/botsavepics4",
     });
 
   if (context.text == "Начать")
