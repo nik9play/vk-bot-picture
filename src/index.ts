@@ -4,6 +4,7 @@ import {
   MessageContext,
   ContextDefaultState,
   Upload,
+  Objects,
 } from "vk-io";
 import _ from "lodash";
 
@@ -16,6 +17,8 @@ vk.updates.on("message_new", async (context) => {
     return context.send({
       message: "Используйте нового бота: https://vk.me/botsavepics5",
     });
+
+  // console.log(context.getAllAttachments("photo"))
 
   if (context.text == "Начать")
     return context.send({
@@ -31,14 +34,20 @@ vk.updates.on("message_new", async (context) => {
   try {
     let photosSent = false;
 
-    if (await processPhotos(context)) {
-      photosSent = true
+    const msg = (
+      await vk.api.messages.getById({
+        message_ids: context.id,
+      })
+    ).items[0];
+
+    if (await processPhotos(context, msg)) {
+      photosSent = true;
     }
 
-    if (context.forwards.length > 0) {
-      for (const forward of context.forwards) {
-        if (await processPhotos(forward)) {
-          photosSent = true
+    if (msg.fwd_messages && msg.fwd_messages.length > 0) {
+      for (const forward of msg.fwd_messages) {
+        if (await processPhotos(context, forward)) {
+          photosSent = true;
         }
       }
     }
@@ -54,68 +63,36 @@ vk.updates.on("message_new", async (context) => {
   }
 });
 
-async function processPhotos(context: MessageContext<ContextDefaultState>) {
-  const attachments = (
-    await vk.api.messages.getById({
-      message_ids: context.id,
-    })
-  ).items[0].attachments;
+async function processPhotos(
+  initialContext: MessageContext<ContextDefaultState>,
+  msg: Objects.MessagesMessage
+): Promise<boolean> {
+  const attachments = msg.attachments.filter(
+    (attachment) => attachment.type === "photo"
+  );
 
-  if (attachments && context.hasAttachments("photo")) {
+  if (attachments.length === 0) return false;
+
+  if (attachments) {
     let photoArray = [];
 
-    photoArray = attachments
-      .filter((attachment) => attachment.type === "photo")
-      .map((photo) => {
-        const accessKey =
-          photo.photo.access_key !== undefined
-            ? `_${photo.photo.access_key}`
-            : "";
+    photoArray = attachments.map((photo) => {
+      const accessKey = photo.photo.access_key
+        ? `_${photo.photo.access_key}`
+        : "";
 
-        return `${photo.type}${photo.photo.owner_id}_${photo.photo.id}${accessKey}`;
-      });
-
-    await context.send({
-      attachment: photoArray.join(","),
+      return `${photo.type}${photo.photo.owner_id}_${photo.photo.id}${accessKey}`;
     });
 
-    // console.log(attachments[0].photo.sizes[0].url);
+    if (photoArray.length > 0) {
+      await initialContext.send({
+        attachment: photoArray.join(","),
+      });
 
-    // await context.send({
-    //   message: '⌛ Жди...',
-    // });
-
-    // const uploadValues = attachments
-    //   .filter((attachment) => attachment.type === "photo")
-    //   .map((photo) => {
-    //     return {
-    //       value: photo.photo.sizes[0].url,
-    //     };
-    //   });
-
-    // const attachmentsMsg: PhotoAttachment[] = []
-
-    // const promises = []
-
-    // for (const value of uploadValues) {
-    //   promises.push(upload.messagePhoto({
-    //     source: {
-    //       values: value,
-    //     },
-    //   }).then(att => attachmentsMsg.push(att)))
-    // }
-
-    // await Promise.all(promises)
-
-    // await context.send({
-    //   attachment: attachmentsMsg,
-    // });
-
-    // } else if () {
-    return true;
-  } else {
-    return false;
+      return true;
+    }
   }
+  return false;
 }
 
 vk.updates
