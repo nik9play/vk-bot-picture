@@ -11,14 +11,10 @@ const vk = new VK({
   token: process.env.BOT_TOKEN || "",
 });
 
-const upload = new Upload({
-  api: vk.api,
-});
-
 vk.updates.on("message_new", async (context) => {
-  if (context.$groupId === 227318832)
+  if (context.$groupId === 228941032)
     return context.send({
-      message: "Используйте нового бота: https://vk.me/botsavepics4",
+      message: "Используйте нового бота: https://vk.me/botsavepics5",
     });
 
   if (context.text == "Начать")
