@@ -13,16 +13,14 @@ const vk = new VK({
 });
 
 vk.updates.on("message_new", async (context) => {
-  if (context.$groupId === 228941032)
+  if (context.$groupId === parseInt(process.env["OLD_BOT_ID"]!))
     return context.send({
-      message: "Используйте нового бота: https://vk.me/botsavepics5",
+      message: `Используйте нового бота: ${process.env["CURRENT_BOT_URL"]}`,
     });
-
-  // console.log(context.getAllAttachments("photo"))
 
   if (context.text == "Начать")
     return context.send({
-      message: `👇 Просто отправь картинки сюда, и бот их перекинет. Бот может пересылать картинки из обычных сообщений, а так же пересланных сообщений первого уровня вложенности.`,
+      message: `👇 Просто отправь картинки сюда, и бот их перекинет. Бот может пересылать картинки из обычных и пересланных сообщений.`,
       keyboard: Keyboard.builder().textButton({
         label: "Начать",
         payload: {
@@ -40,28 +38,39 @@ vk.updates.on("message_new", async (context) => {
       })
     ).items[0];
 
-    if (await processPhotos(context, msg)) {
+    if (await processFwds(context, msg)) {
       photosSent = true;
-    }
-
-    if (msg.fwd_messages && msg.fwd_messages.length > 0) {
-      for (const forward of msg.fwd_messages) {
-        if (await processPhotos(context, forward)) {
-          photosSent = true;
-        }
-      }
     }
 
     if (!photosSent) {
       context.send(
-        "❌ Я не вижу изображений. Бот может пересылать картинки из обычных сообщений, а так же пересланных сообщений первого уровня вложенности."
+        "❌ Я не вижу изображений. Бот может пересылать изображения из обычных и пересланных сообщений."
       );
     }
   } catch (err) {
     console.error(err);
-    context.send("❌ Произошла неизвестная ошибка.");
+    context.send("❌ Произошла неизвестная ошибка. Сообщите разработчику об этой проблеме: https://vk.me/nikitabogun");
   }
 });
+
+async function processFwds(
+  context: MessageContext<ContextDefaultState>,
+  msg: Objects.MessagesMessage
+): Promise<boolean> {
+  let photosSent = false;
+
+  if (await processPhotos(context, msg)) {
+    photosSent = true;
+  }
+
+  if (msg.fwd_messages && msg.fwd_messages.length > 0) {
+    for (const forward of msg.fwd_messages) {
+      if (await processFwds(context, forward)) photosSent = true;
+    }
+  }
+
+  return photosSent;
+}
 
 async function processPhotos(
   initialContext: MessageContext<ContextDefaultState>,
