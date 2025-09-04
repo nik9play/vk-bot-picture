@@ -10,6 +10,7 @@ import _ from "lodash";
 
 const vk = new VK({
   token: process.env.BOT_TOKEN || "",
+  apiBaseUrl: "https://api.vk.ru/method",
 });
 
 vk.updates.on("message_new", async (context) => {
